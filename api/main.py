@@ -8,7 +8,7 @@ import os
 
 app = FastAPI()
 
-# === CORS 設定 ===
+# CORS 設定
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,21 +17,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# === 靜態資料夾設定（改這裡）===
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 上一層
+# === 靜態資料夾設定 ===
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 上一層（專案根目錄）
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 INDEX_FILE = os.path.join(STATIC_DIR, "index.html")
 
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# === 首頁 route ===
+# 首頁 route
 @app.get("/")
 def read_index():
     if os.path.exists(INDEX_FILE):
         return FileResponse(INDEX_FILE)
     else:
-        raise HTTPException(status_code=404, detail=f"找不到檔案: {INDEX_FILE}")
+        raise HTTPException(status_code=404, detail=f"找不到 index.html，實際路徑：{INDEX_FILE}")
 
 # === 留言資料模型 ===
 class Comment(BaseModel):
@@ -60,5 +60,5 @@ def comment_post(post_id: int, comment: Comment):
         return {"comments": posts[post_id]["comments"]}
     raise HTTPException(status_code=404, detail="找不到貼文")
 
-# === Vercel 專用 ===
+# === 給 Vercel 用 ===
 handler = app
