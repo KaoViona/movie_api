@@ -51,7 +51,7 @@
     // 取得後端貼文資料
     async function fetchPosts() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/posts");
+        const res = await fetch("/posts");  //  改成相對路徑
         posts = await res.json();
         renderPostList();
         renderPost(currentPostId);
@@ -109,7 +109,7 @@
     // Like 按鈕
     document.getElementById("likeBtn").addEventListener("click", async () => {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/posts/${currentPostId}/like`, { method: "POST" });
+        const res = await fetch(`/posts/${currentPostId}/like`, { method: "POST" }); //  改成相對路徑
         const data = await res.json();
         posts[currentPostId].likes = data.likes;
         document.getElementById("likeCount").textContent = data.likes;
@@ -128,7 +128,7 @@
       const text = document.getElementById("commentText").value.trim();
       if (!text) return;
       try {
-        const res = await fetch(`http://127.0.0.1:8000/posts/${currentPostId}/comment`, {
+        const res = await fetch(`/posts/${currentPostId}/comment`, {   //  改成相對路徑
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user: "K", text })
