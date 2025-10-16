@@ -17,12 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# === 靜態資料夾設定 ===
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# === 靜態資料夾設定（改這裡）===
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 上一層
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 INDEX_FILE = os.path.join(STATIC_DIR, "index.html")
 
-# 掛載 static 資料夾 (讓 JS / CSS 可以正常讀)
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
