@@ -23,7 +23,8 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 INDEX_FILE = os.path.join(STATIC_DIR, "index.html")
 
 # 掛載 static 資料夾 (讓 JS / CSS 可以正常讀)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # === 首頁 route ===
 @app.get("/")
@@ -59,3 +60,6 @@ def comment_post(post_id: int, comment: Comment):
         })
         return {"comments": posts[post_id]["comments"]}
     raise HTTPException(status_code=404, detail="找不到貼文")
+
+# === Vercel 專用 ===
+handler = app
