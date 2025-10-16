@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電影部落格</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex justify-center py-10 font-sans">
+
+  <div class="w-11/12 max-w-6xl bg-white shadow-xl rounded-xl p-8">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">🎬 電影部落格</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- 左側：電影清單 -->
+      <div class="md:col-span-1 space-y-4" id="postList"></div>
+
+      <!-- 右側：電影內容區 -->
+      <div id="articleContent" class="md:col-span-2 border rounded-lg p-6 bg-gray-50 relative">
+        <img id="moviePoster" src="" alt="電影海報" class="w-full mb-4 rounded-lg shadow">
+        <h2 class="text-2xl font-bold mb-2" id="postTitle"></h2>
+        <p class="text-sm text-gray-600 mb-4" id="postDirector"></p>
+        <p class="text-gray-700 leading-relaxed mb-4" id="postContent"></p>
+
+        <!-- Like & Comment 按鈕 -->
+        <div class="flex items-center space-x-6 mb-6">
+          <button id="likeBtn" class="flex items-center space-x-2 text-blue-600 hover:text-blue-800">
+            <span>👍</span><span>Like</span><span id="likeCount">0</span>
+          </button>
+          <button id="commentBtn" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
+            <span>💬</span><span>留言</span><span id="commentCount">0</span>
+          </button>
+        </div>
+
+        <!-- 留言輸入區 -->
+        <div id="commentInputArea" class="mt-4 hidden">
+          <textarea id="commentText" class="w-full border rounded-lg p-2 mb-2" rows="2" placeholder="寫下你的留言..."></textarea>
+          <button id="sendComment" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700">送出</button>
+        </div>
+
+        <!-- 留言列表 -->
+        <div id="commentList" class="mt-6 space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let posts = {};
+    let currentPostId = 1;
+
+    // 取得後端貼文資料
+    async function fetchPosts() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/posts");
+        posts = await res.json();
+        renderPostList();
+        renderPost(currentPostId);
+      } catch (err) {
+        alert("無法取得貼文資料，請確認後端有啟動");
+      }
+    }
+
+    // 顯示左側貼文列表
+    function renderPostList() {
+      const listDiv = document.getElementById("postList");
+      listDiv.innerHTML = "";
+      for (const id in posts) {
+        const post = posts[id];
+        const card = document.createElement("div");
+        card.className = "article-card border rounded-lg p-4 hover:bg-gray-50 cursor-pointer";
+        card.innerHTML = `
+          <h2 class="font-bold text-lg">${post.title}</h2>
+          <p class="text-sm text-gray-600">導演：${post.director}</p>
+          <p class="text-gray-700 mt-2">${post.content.slice(0, 20)}...</p>
+          <p class="text-right text-blue-600 text-sm">閱讀更多 →</p>
+        `;
+        card.addEventListener("click", () => {
+          currentPostId = id;
+          renderPost(id);
+        });
+        listDiv.appendChild(card);
+      }
+    }
+
+    // 顯示右側文章內容
+    function renderPost(id) {
+      const post = posts[id];
+      document.getElementById("moviePoster").src = post.poster;
+      document.getElementById("postTitle").textContent = post.title;
+      document.getElementById("postDirector").textContent = `導演：${post.director}`;
+      document.getElementById("postContent").textContent = post.content;
+      document.getElementById("likeCount").textContent = post.likes;
+      document.getElementById("commentCount").textContent = post.comments.length;
+      renderComments(post.comments);
+    }
+
+    function renderComments(commentArray) {
+      const list = document.getElementById("commentList");
+      list.innerHTML = "";
+      commentArray.forEach(c => {
+        const div = document.createElement("div");
+        div.className = "border rounded-lg p-2 bg-white flex items-start space-x-2";
+        div.innerHTML = `<div class="text-gray-400 text-xl">👤</div><p class="text-gray-800">${c.user}: ${c.text}</p>`;
+        list.appendChild(div);
+      });
+      document.getElementById("commentCount").textContent = commentArray.length;
+    }
+
+    // Like 按鈕
+    document.getElementById("likeBtn").addEventListener("click", async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/posts/${currentPostId}/like`, { method: "POST" });
+        const data = await res.json();
+        posts[currentPostId].likes = data.likes;
+        document.getElementById("likeCount").textContent = data.likes;
+      } catch {
+        alert("按讚失敗，請確認後端有啟動");
+      }
+    });
+
+    // Comment 按鈕
+    document.getElementById("commentBtn").addEventListener("click", () => {
+      document.getElementById("commentInputArea").classList.toggle("hidden");
+    });
+
+    // 留言送出
+    document.getElementById("sendComment").addEventListener("click", async () => {
+      const text = document.getElementById("commentText").value.trim();
+      if (!text) return;
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/posts/${currentPostId}/comment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user: "K", text })
+        });
+        const data = await res.json();
+        posts[currentPostId].comments = data.comments;
+        renderComments(data.comments);
+        document.getElementById("commentText").value = "";
+      } catch {
+        alert("留言失敗，請確認後端有啟動");
+      }
+    });
+
+    window.onload = fetchPosts;
+  </script>
+</body>
+</html>
